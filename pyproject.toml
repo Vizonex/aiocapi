@@ -1,0 +1,57 @@
+[project]
+name = "aiocapi"
+dynamic = ["version"]
+description = "Exposable C-API for asyncio"
+readme = "README.md"
+
+# For the authors section very important that you have a 
+# business email to use if your willing to make one or disclose it.
+# You don't have to (it's not a requirement) but it's encouraged.
+authors = [
+    { name = "Vizonex", email = "VizonexBusiness@gmail.com" }
+]
+# keeping in sync with uvloop as encouragement to 
+# have uvloop try this library out.
+requires-python = ">=3.9"
+dependencies = []
+
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.optional-dependencies]
+tests = ["pytest"]
+tools = [
+    "typer>=0.27.3",
+]
+
+[build-system]
+requires = ["setuptools", "cython", "wheel"]
+
+
+[tool.setuptools.dynamic]
+# NOTE: Change library name <cython_template_uv> when you have thought of what the name
+# of your package should be.
+version = {attr = "aiocapi.__version__"}
+
+
+# Building wheels is extemely important in any project you make that requires compiling.
+# The reason we would do so is that extensions like Visual Studio C++ are known diskspace
+# eaters so some people may be lazy and may want us to compile the library for them.
+# this is why packages distribute things in wheels.
+[tool.cibuildwheel]
+build-frontend = "build"
+
+
+# Uncomment if you need to use the ruff linter on the python side of things...
+# [tool.ruff.lint]
+# select = [
+#     "E",
+#     "W",
+#     "I",
+#     "F"
+# ]
+# ignore = [
+# ]
+
