@@ -1,0 +1,22 @@
+# Compiled sources
+*.pyd
+
+# virtual enviornments
+*.venv
+
+*.egg-info
+
+# Obviously if were testing cython builds
+*.html
+
+# VSCode configurations may differ
+*.vscode
+
+# Vizonex's personal transbin of ideas.
+*.trashbin
+
+*.ruff_cache
+*.pytest_cache
+
+build
+__pycache__

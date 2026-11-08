@@ -49,7 +49,6 @@ typedef enum {
     PyObject *prefix##_cancelled_exc;
 
 
-
 typedef struct {
     FutureObj_HEAD(fut)
 } FutureObj;
@@ -125,7 +124,7 @@ static int default_call_soon(void* user_data, PyObject *loop, PyObject *func, Py
 }
 
 static int
-future_schedule_callbacks(FutureObj *fut, void* user_data, call_soon_cb call_soon_fn)
+future_schedule_callbacks(FutureObj *fut, void* user_data, aiocapi_call_soon_cb call_soon_fn)
 {
     Py_ssize_t len;
     Py_ssize_t i;
@@ -244,7 +243,7 @@ future_get_result(mod_state* state, FutureObj *fut, PyObject **result)
 }
 
 static int
-future_set_result(mod_state* state, FutureObj *fut, PyObject *res, void* user_data, call_soon_cb call_soon_fn)
+future_set_result(mod_state* state, FutureObj *fut, PyObject *res, void* user_data, aiocapi_call_soon_cb call_soon_fn)
 {
     if (future_ensure_alive(fut)) {
         return -1;
@@ -267,7 +266,7 @@ future_set_result(mod_state* state, FutureObj *fut, PyObject *res, void* user_da
 }
 
 static int
-future_set_exception(mod_state* state, FutureObj *fut, PyObject *exc, void* user_data, call_soon_cb call_soon_fn)
+future_set_exception(mod_state* state, FutureObj *fut, PyObject *exc, void* user_data, aiocapi_call_soon_cb call_soon_fn)
 {
     PyObject *exc_val = NULL;
 
@@ -359,15 +358,13 @@ Future_Done(void* _state, PyObject* self){
     __FUTURE_VALIDATION_CHECK(self, _state, -1)
     fut = (FutureObj*)self;
     /* 0 or 1 */
-    return (!future_is_alive(fut) || (fut->fut_state == STATE_PENDING));
+    return ((!future_is_alive(fut)) || (fut->fut_state != STATE_PENDING));
 }
 
 
 
-
-
 static int 
-Future_CancelCb(void *_state, PyObject *self, PyObject *message, void* user_data, call_soon_cb loop_call_soon){
+Future_CancelCb(void *_state, PyObject *self, PyObject *message, void* user_data, aiocapi_call_soon_cb loop_call_soon){
     FutureObj* fut;
     __FUTURE_VALIDATION_CHECK(self, _state, -1)
     fut = (FutureObj*)self;
@@ -383,13 +380,15 @@ Future_CancelCb(void *_state, PyObject *self, PyObject *message, void* user_data
     if (future_schedule_callbacks(fut, user_data, loop_call_soon) < 0) {
         return -1;
     }
-    return 0;
+    return 1;
 }
 
 /* The not-so advanced version of cancellation 
  * WARNING: This Falls back to a worse version of what CPython has 
- * As were working with The Intentionally Exposed C-API on different scopes. */
-static int 
+ * As were working with The Intentionally Exposed C-API on different scopes. 
+ * Use the other one if your developing a new event-loop in Cython, C/C++ or Rust (PyO3). 
+ */
+static int
 Future_Cancel(void *_state, PyObject *self, PyObject *message){
     return Future_CancelCb(_state, self, message, _state, default_call_soon);
 }
@@ -469,7 +468,7 @@ int Future_HasException(void* _state, PyObject* self){
 }
 
 static int Future_SetResultCb(
-    void* _state, PyObject* self, PyObject* result, void* user_data, call_soon_cb call_soon_func
+    void* _state, PyObject* self, PyObject* result, void* user_data, aiocapi_call_soon_cb call_soon_func
 ){
     FutureObj* fut;
     __FUTURE_VALIDATION_CHECK(self, _state, -1)
@@ -488,7 +487,7 @@ Future_SetResult(void *_state, PyObject *self, PyObject *result){
 
 
 static int Future_SetExceptionCb(
-    void* _state, PyObject* self, PyObject* exception, void* user_data, call_soon_cb call_soon_func
+    void* _state, PyObject* self, PyObject* exception, void* user_data, aiocapi_call_soon_cb call_soon_func
 ){
     FutureObj* fut;
     __FUTURE_VALIDATION_CHECK(self, _state, -1)

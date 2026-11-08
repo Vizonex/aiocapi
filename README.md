@@ -20,7 +20,36 @@ When improving my very first pypi pacakge when I was still a beginner at coding.
 This libary is a lot simillarities to aiofastnet which takes advantage of dlls and openssl apis. This project takes advantage of skills pioneered from multidict and several other ideas and puts it into one place. Rather than being your simple ordinary python library it is
 made for C/C++ and Cython based projects.
 
+```cython
+from aiocapi cimport Future, Future_CancelCb, import_aiocapi
 
+import_aiocapi()
+
+# This code may or may not compile but it is to demonstrate a real use-case.
+
+# Hypothetically this will be our Cythonic EventLoop
+cdef class Loop:
+    cdef object faster_call_soon(self, object callback, tuple args, object context):
+        pass
+
+cdef int on_loop_call_soon(
+    void* user_data,
+    object loop,
+    object func,
+    object arg,
+    object ctx
+) except -1:
+    (<Loop>loop).faster_call_soon(func, arg, ctx)
+    return 0
+
+cdef int future_cancel(object fut) except -1:
+    # low-leveled callback with shortcut to a faster function call
+    return Future_CancelCb(fut, "cancelled future", NULL, on_loop_call_soon)
+
+# cdef class extension from external source.
+cdef class FutureExtension(Future):
+    pass
+```
 
 ## Checklist of things needed before release
 
@@ -59,5 +88,5 @@ made for C/C++ and Cython based projects.
     - Tasks   [ ]
     - Tests   [ ]
 
-- Cython [ ]
+- Cython [x]
 

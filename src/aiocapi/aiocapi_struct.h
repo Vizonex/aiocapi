@@ -31,7 +31,7 @@ typedef enum {
 /* call_soon is left unimplemented since it uses unstable apis and
 even implementing them could be slow. So it's left up to the author this makes
 event-loops like winloop take advantage of these improvements */
-typedef int (*call_soon_cb)(void* user_data, PyObject *loop, PyObject *func, PyObject *arg, PyObject *ctx);
+typedef int (*aiocapi_call_soon_cb)(void* user_data, PyObject *loop, PyObject *func, PyObject *arg, PyObject *ctx);
 
 /* TODO: Python version flags. This will be intentionally done when
 a new version of python comes out someone will immediately be able to figure
@@ -52,8 +52,9 @@ typedef struct {
 
     FutureState (*Future_GetState)(void* state, PyObject* self);
     int (*Future_Done)(void* state, PyObject* self);
-    /* adv stands for advanced cancellation (user configured callbacks for performance improvements.) */
-    int (*Future_CancelCb)(void* state, PyObject* self, PyObject* message, void* user_data, call_soon_cb call_soon_func);
+    /* Cbs are an improvemnet caller/shortcut for those who need  
+        to utilize a faster loop.call_soon function. */
+    int (*Future_CancelCb)(void* state, PyObject* self, PyObject* message, void* user_data, aiocapi_call_soon_cb call_soon_func);
     int (*Future_Cancel)(void* state, PyObject* self, PyObject* message);
     int (*Future_Cancelled)(void* state, PyObject* self);
     PyObject* (*Future_Result)(void* state, PyObject* self);
@@ -62,9 +63,9 @@ typedef struct {
     because NULL checking a PyObject* isn't a reliable solution
     unless you are intrested in unwanted surprises :) */
     int (*Future_HasException)(void* state, PyObject* self);
-    int (*Future_SetResultCb)(void* state, PyObject* self, PyObject* result, void* user_data, call_soon_cb call_soon_func);
+    int (*Future_SetResultCb)(void* state, PyObject* self, PyObject* result, void* user_data, aiocapi_call_soon_cb call_soon_func);
     int (*Future_SetResult)(void* state, PyObject* self, PyObject* result);
-    int (*Future_SetExceptionCb)(void* state, PyObject* self, PyObject* exception, void* user_data, call_soon_cb call_soon_func);
+    int (*Future_SetExceptionCb)(void* state, PyObject* self, PyObject* exception, void* user_data, aiocapi_call_soon_cb call_soon_func);
     int (*Future_SetException)(void* state, PyObject* self, PyObject* exception);
 
 } AioCAPI;

@@ -12,7 +12,7 @@ extern "C" {
 /* Same as multidict this was intentially done to save the maintainers
 some delicate time. */
 
-static inline int 
+static inline int
 _AioCAPI_CheckAPIVersion(AioCAPI* capi){
     if (capi->api_version < AIOCAPI_CAPI_VERSION) {
         PyErr_Format(PyExc_RuntimeError,
@@ -67,7 +67,7 @@ Future_Cancel(AioCAPI* capi, PyObject* self, PyObject* message){
 }
 
 static int 
-Future_CancelCb(AioCAPI* capi, PyObject *self, PyObject *message, void* user_data, call_soon_cb call_soon_fn){
+Future_CancelCb(AioCAPI* capi, PyObject *self, PyObject *message, void* user_data, aiocapi_call_soon_cb call_soon_fn){
     return capi->Future_CancelCb(capi->state, self, message, user_data, call_soon_fn);
 }
 
@@ -96,7 +96,7 @@ Future_HasException(
 }
 
 static int Future_SetResultCb(
-    AioCAPI* capi, PyObject* self, PyObject* result, void* user_data, call_soon_cb call_soon_func
+    AioCAPI* capi, PyObject* self, PyObject* result, void* user_data, aiocapi_call_soon_cb call_soon_func
 ){
     return capi->Future_SetResultCb(capi->state, self,  result, user_data, call_soon_func);
 }
@@ -107,7 +107,7 @@ Future_SetResult(AioCAPI* capi, PyObject *self, PyObject *result){
 }
 
 static int Future_SetExceptionCb(
-    AioCAPI* capi, PyObject* self, PyObject* exception, void* user_data, call_soon_cb call_soon_func
+    AioCAPI* capi, PyObject* self, PyObject* exception, void* user_data, aiocapi_call_soon_cb call_soon_func
 ){
     return capi->Future_SetExceptionCb(capi->state, self, exception, user_data, call_soon_func);
 }
