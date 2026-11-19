@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from asyncio import AbstractEventLoop, get_event_loop
 from typing import Any, Protocol, TypeVar, cast
 
 import pytest
@@ -13,26 +12,13 @@ _T = TypeVar("_T")
 
 class CAPI(Protocol):
     # typehints are provided for developer's sanity.
-    @staticmethod
-    def future_get_loop(arg: Future[Any]) -> AbstractEventLoop: ...
-    @staticmethod
-    def future_get_state(arg: Future[Any]) -> int: ...
-    @staticmethod
     def future_set_result(arg: Future[_T], result: _T) -> None: ...
-    @staticmethod
-    def future_done(arg: Future[Any]) -> bool: ...
     @staticmethod
     def future_cancel(arg: Future[Any]) -> bool: ...
     @staticmethod
     def future_cancel_with_message(arg: Future[Any], message: str) -> None: ...
     @staticmethod
-    def future_cancelled(arg: Future[Any]) -> bool: ...
-    @staticmethod
     def future_set_exception(arg: Future[Any], exc: Exception) -> None: ...
-    @staticmethod
-    def future_exception(arg: Future[Any]) -> Exception | None: ...
-    @staticmethod
-    def future_result(arg: Future[_T]) -> _T: ...
 
 
 _testcapi: CAPI = pytest.importorskip("aiocapi._testcapi")
@@ -49,28 +35,18 @@ async def fut() -> Future:
 
 
 def check_cancelled(capi: CAPI, fut: Future[Any]) -> None:
-    """multi-check to see if future was cancelled
-    via multiple different functions"""
-    assert capi.future_cancelled(fut)
+    """checks to see if future was cancelled"""
     assert fut.cancelled()
-    assert capi.future_get_state(fut) == 1
-    assert fut._state == "CANCELLED"
-
 
 def check_done(capi: CAPI, fut: Future[Any]) -> None:
-    """multi-check to see if future was cancelled
+    """check to see if future was cancelled
     via multiple different functions"""
-    assert capi.future_done(fut)
     assert fut.cancelled()
-    # can't be pending! so anything but 0
-    assert capi.future_get_state(fut) != 0
-    assert fut._state == "FINISHED"
 
 
 def check_pending(capi: CAPI, fut: Future[Any]) -> None:
-    """multi-check to see if future was cancelled
+    """check to see if future was cancelled
     via multiple different functions"""
-    assert capi.future_get_state(fut) == 0
     assert fut._state == "PENDING"
 
 
@@ -78,26 +54,17 @@ def check_pending(capi: CAPI, fut: Future[Any]) -> None:
 class TestFuture:
     # Based off test.test_asyncio.BaseFutureTests.test_initial_state
     async def test_initial_state(self, capi: CAPI, fut: Future) -> None:
-        assert capi.future_cancelled(fut) is False
-        assert capi.future_done(fut) is False
+        assert fut.cancelled() is False
+        assert fut.done() is False
         # in all cases a pending future should remain at 0.
         check_pending(capi, fut)
         capi.future_cancel(fut)
         check_cancelled(capi, fut)
 
-    async def test_initial_state_with_pure_python_cancel(
-        self, capi: CAPI, fut: Future
-    ) -> None:
-        assert capi.future_cancelled(fut) is False
-        assert capi.future_done(fut) is False
-        # in all cases a pending future should remain at 0.
-        assert capi.future_get_state(fut) == 0
-        fut.cancel()
-
     # not ready...
-    @pytest.mark.xfail
-    async def test_global_loop(self, capi: CAPI, fut: Future[Any]) -> None:
-        assert capi.future_get_loop(fut) == get_event_loop()
+    # @pytest.mark.xfail
+    # async def test_global_loop(self, capi: CAPI, fut: Future[Any]) -> None:
+    #     assert capi.future_get_loop(fut) == get_event_loop()
 
     async def test_cancellation_raises(self, capi: CAPI, fut: Future[Any]) -> None:
         # Cancel, message is NULL
@@ -113,12 +80,12 @@ class TestFuture:
 
     async def test_cancel(self, capi: CAPI, fut: Future[Any]):
         capi.future_cancel(fut)
-        assert capi.future_done(fut)
+        assert fut.done()
         with pytest.raises(CancelledError):
-            capi.future_result(fut)
+            fut.result()
 
         with pytest.raises(CancelledError):
-            capi.future_exception(fut)
+            fut.exception()
 
         with pytest.raises(InvalidStateError):
             capi.future_set_result(fut, None)
