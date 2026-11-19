@@ -7,6 +7,22 @@ extern "C" {
 
 #include "Python.h"
 
+/* Intern Strings */
+#define AIOCAPI_INTERN(XX) \
+    XX(get_loop)           \
+    XX(_loop)              \
+    XX(call_soon)          \
+    XX(set_result)         \
+    XX(cancel)             \
+    XX(set_exception)
+
+
+
+#define AIOCAPI_DEFINE_INTERN(NAME) \
+    PyObject* intern__##NAME;
+
+
+
 /*********************************************************************
  * Module State                                                      *
  *********************************************************************/
@@ -20,6 +36,10 @@ typedef struct {
     PyObject* asyncio_InvalidStateError;
     PyObject* asyncio_CancelledError;
     PyObject* context_kwname;
+    
+    /* interned strings */
+    AIOCAPI_INTERN(AIOCAPI_DEFINE_INTERN)
+
 } mod_state;
 
 static struct PyModuleDef aiocapi_module;

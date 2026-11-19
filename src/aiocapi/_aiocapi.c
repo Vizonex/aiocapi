@@ -4,20 +4,14 @@
 /* Library modules (Used for determining what version of python to hack) */
 
 #include "lib/module_state.h"
-#include "lib/aio311.h"
+#include "lib/api.h"
 #include "lib/pythoncapi_compat.h"
 #include "aiocapi_struct.h"
 
 /* Compiler Error should be enough to stop unimplemented python versions */
-#ifndef AIO311
-    #error "Your Version of Python has not been implemented yet" \
-        "please throw an issue with the version of python you are looking for."
-#endif
-
 
 /* Will just put the capsule insatallation here as it's the key
 importance of this library, without it that library is nothing. */
-
 
 static void
 _capsule_free(AioCAPI* capi)
@@ -48,24 +42,8 @@ new_capsule(mod_state* state)
 
     capi->FutureType = state->FutureType;
     capi->TaskType = state->TaskType;
-    
-    // capi->Future_New = Future_New;
-    capi->Future_GetLoop = Future_GetLoop;
-    capi->Future_GetState = Future_GetState;
-    capi->Future_Done = Future_Done;
-
     capi->Future_Cancel = Future_Cancel;
-    capi->Future_CancelCb = Future_CancelCb;
-    capi->Future_Cancelled = Future_Cancelled;
-    capi->Future_Result = Future_Result;
-    capi->Future_Exception = Future_Exception;
-
-    capi->Future_HasException = Future_HasException;
-
     capi->Future_SetResult = Future_SetResult;
-    capi->Future_SetResultCb = Future_SetResultCb;
-
-    capi->Future_SetExceptionCb = Future_SetExceptionCb;
     capi->Future_SetException = Future_SetException;
 
     PyObject* ret =
@@ -205,6 +183,18 @@ PyInit__aiocapi(void){
     GET_MOD_ATTR(temp, NAME) \
     SET_OBJECT(temp, NAME) \
     module_state->VAR = temp;
+
+#define SET_MOD_INTERN_STRING(NAME) \
+    temp = PyUnicode_InternFromString(#NAME); \
+    if (temp == NULL) goto error; \
+    if (PyModule_AddObject(module, #NAME, temp) < 0){ \
+        Py_DECREF(temp); \
+        goto error; \
+    } \
+    module_state->intern__##NAME = temp;
+
+
+    AIOCAPI_INTERN(SET_MOD_INTERN_STRING)
 
 
     /* we want the lower level types not the Pure Python Ones. 

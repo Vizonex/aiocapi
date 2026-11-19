@@ -27,21 +27,13 @@ get_mod_state(PyObject* mod)
 
 
 
-static PyObject*
-future_get_loop(PyObject* self, PyObject* arg){
-    mod_state* state = get_mod_state(self);
-    return (PyObject*)Future_GetLoop(state->capi, arg);
-}
+// static PyObject*
+// future_get_loop(PyObject* self, PyObject* arg){
+//     mod_state* state = get_mod_state(self);
+//     return (PyObject*)Future_GetLoop(state->capi, arg);
+// }
 
-static PyObject*
-future_get_state(PyObject* self, PyObject* arg){
-    mod_state* state = get_mod_state(self);
-    FutureState fut_state = Future_GetState(state->capi, arg);
-    if (fut_state == FUTURE_ERROR){
-        return NULL;
-    }
-    return PyLong_FromLong((long)fut_state);
-}
+
 
 static PyObject*
 future_set_result(PyObject* self, PyObject* const* args, Py_ssize_t nargs)
@@ -57,20 +49,6 @@ future_set_result(PyObject* self, PyObject* const* args, Py_ssize_t nargs)
     RETURN_STATUS_AS_NONE(ret);
 }
 
-static PyObject* 
-future_done(PyObject* self, PyObject* arg){
-    mod_state* state = get_mod_state(self);
-    int ret = Future_Done(state->capi, arg);
-    RETURN_STATUS_AS_BOOL(ret);
-}
-
-static PyObject*
-future_cancel(PyObject* self, PyObject* arg){
-    mod_state* state = get_mod_state(self);
-    int ret = Future_Cancel(state->capi, arg, NULL);
-    RETURN_STATUS_AS_BOOL(ret);
-}
-
 static PyObject*
 future_cancel_with_message(PyObject* self, PyObject* const* args, Py_ssize_t nargs){
     if (nargs != 2) {
@@ -80,13 +58,6 @@ future_cancel_with_message(PyObject* self, PyObject* const* args, Py_ssize_t nar
     }
     mod_state* state = get_mod_state(self);
     int ret = Future_Cancel(state->capi, args[0], args[1]);
-    RETURN_STATUS_AS_BOOL(ret);
-}
-
-static PyObject*
-future_cancelled(PyObject* self, PyObject* arg){
-    mod_state* state = get_mod_state(self);
-    int ret = Future_Cancelled(state->capi, arg);
     RETURN_STATUS_AS_BOOL(ret);
 }
 
@@ -103,15 +74,10 @@ future_set_exception(PyObject* self, PyObject* const* args, Py_ssize_t nargs){
 }
 
 static PyObject*
-future_result(PyObject* self, PyObject* arg){
+future_cancel(PyObject* self, PyObject* arg){
     mod_state* state = get_mod_state(self);
-    return Future_Result(state->capi, arg);
-}
-
-static PyObject*
-future_exception(PyObject* self, PyObject* arg){
-    mod_state* state = get_mod_state(self);
-    return Future_Exception(state->capi, arg);
+    int ret = Future_Cancel(state->capi, arg, NULL);
+    RETURN_STATUS_AS_BOOL(ret);
 }
 
 
@@ -133,19 +99,13 @@ module_free(void* mod)
     (void)module_clear((PyObject*)mod);
 }
 
-/* Function Map for _testcapi as a shortcut 
- * inspired ideas from llhttp and libuv */
+// /* Function Map for _testcapi as a shortcut 
+//  * inspired ideas from llhttp and libuv */
 #define TESTCAPI_FUNCTION_MAP(XX) \
-    XX(future_get_loop, METH_O) \
-    XX(future_get_state, METH_O) \
     XX(future_set_result, METH_FASTCALL) \
-    XX(future_done, METH_O) \
     XX(future_cancel, METH_O) \
     XX(future_cancel_with_message, METH_FASTCALL) \
-    XX(future_cancelled, METH_O) \
-    XX(future_set_exception, METH_FASTCALL) \
-    XX(future_result, METH_O) \
-    XX(future_exception, METH_O)
+    XX(future_set_exception, METH_FASTCALL)
 
 
 /* Expands defined module methods */
